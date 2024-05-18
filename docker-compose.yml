@@ -1,0 +1,33 @@
+version: '3.4'
+
+networks:
+  currency_network:
+
+services:
+  currency_service_db: 
+    container_name: currency_service_db
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+        - 8003:1433
+    environment:
+        - ACCEPT_EULA=Y
+        - MSSQL_SA_PASSWORD=root@12345@
+    networks:
+        - currency_network
+  currency_service:
+    container_name: currency_service_app
+    image: ${DOCKER_REGISTRY-}currencyservice
+    build:
+      context: .
+      dockerfile: CurrencyService/Dockerfile
+    ports:
+        - 8005:8081
+        - 8011:8080
+    depends_on:
+        - currency_service_db
+    environment:
+        - DB_HOST=currency_service_db
+        - DB_NAME=currencies
+        - DB_SA_PASSWORD=root@12345@
+    networks:
+        - currency_network
