@@ -18,6 +18,7 @@
 	
 	<ItemGroup>
     <ProjectReference Include="..\..\ArchiveCleanupService\ArchiveCleanupService.csproj" />
+    <ProjectReference Include="..\ArchiveCleanupService\ArchiveCleanupService.csproj" />
     <ProjectReference Include="..\ExchangeData\ExchangeData.csproj" />
   </ItemGroup>
 </Project>

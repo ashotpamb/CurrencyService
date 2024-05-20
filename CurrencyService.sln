@@ -9,7 +9,7 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExchangeData", "ExchangeData\ExchangeData.csproj", "{B5D1BA54-65C5-44FF-B159-4A0A5162C421}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchiveCleanupService", "..\ArchiveCleanupService\ArchiveCleanupService.csproj", "{337FCC17-141E-4688-A557-0535A1E714F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveCleanupService", "ArchiveCleanupService\ArchiveCleanupService.csproj", "{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{B5D1BA54-65C5-44FF-B159-4A0A5162C421}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5D1BA54-65C5-44FF-B159-4A0A5162C421}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5D1BA54-65C5-44FF-B159-4A0A5162C421}.Release|Any CPU.Build.0 = Release|Any CPU
-		{337FCC17-141E-4688-A557-0535A1E714F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{337FCC17-141E-4688-A557-0535A1E714F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{337FCC17-141E-4688-A557-0535A1E714F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{337FCC17-141E-4688-A557-0535A1E714F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
