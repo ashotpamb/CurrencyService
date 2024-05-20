@@ -15,9 +15,8 @@
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
-	
-	<ItemGroup>
-    <ProjectReference Include="..\..\ArchiveCleanupService\ArchiveCleanupService.csproj" />
+
+  <ItemGroup>
     <ProjectReference Include="..\ArchiveCleanupService\ArchiveCleanupService.csproj" />
     <ProjectReference Include="..\ExchangeData\ExchangeData.csproj" />
   </ItemGroup>
