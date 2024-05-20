@@ -22,8 +22,8 @@ namespace ExchangeData.Data
                 .Property(e => e.Diff)
                 .HasColumnType("decimal(18, 2)");
         }
-        public DbSet<ExchangeRate> Rates { get; set; }
-        public DbSet<IsoCode> IsoCodes { get; set; }
-        public DbSet<Archive> Archives { get; set; }
+        public virtual DbSet<ExchangeRate> Rates { get; set; }
+        public virtual DbSet<IsoCode> IsoCodes { get; set; }
+        public virtual DbSet<Archive> Archives { get; set; }
     }
 }

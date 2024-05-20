@@ -1,4 +1,5 @@
-﻿using ExchangeData.Entities;
+﻿using ExchangeData.Dtos;
+using ExchangeData.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace ExchangeData.Repositories
     public interface IExchangeRateRepository
     {
         Task<bool> AddRangeAsync(List<ExchangeRate> currencies);
-        Task<List<object>> GetByRangeAsync(string isoCode, string dateFrom, string dateTo);
+        Task<List<ExchangeRateDto>> GetByRangeAsync(string isoCode, string dateFrom, string dateTo);
         Task<bool> SaveChangesAsync();
     }
 }

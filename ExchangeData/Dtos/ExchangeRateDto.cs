@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ExchangeData.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace ExchangeData.Dtos
     {
         public decimal Rate { get; set; }
         public int Amount { get; set; }
-        public string ISO { get; set; }
+        public IsoCode ISO { get; set; }
         public decimal Diff { get; set; }
 
         private string _rateDate;
@@ -31,13 +32,13 @@ namespace ExchangeData.Dtos
 
         public object Serialize()
         {
-            if (ISO == null)
+            if (Rate == default || Amount == default || Diff == default)
             {
                 return new { Message = $"CBA has no data for Date: { RateDate }", CBA_HasData };
             }
             else
             {
-                return new { Rate, Amount, ISO, Diff, RateDate, CBA_HasData, Message = "Success" };
+                return new { Rate, Amount, ISO.Code, Diff, RateDate, CBA_HasData, Message = "Success" };
             }
         }
     }

@@ -17,11 +17,11 @@ namespace ExchangeData.Profile
             CreateMap<ExchangeRateDto, ExchangeRate>()
                 .ForMember(dest => dest.ID, opt => opt.Ignore())
                 .ForMember(dest => dest.RateDate, opt => opt.MapFrom(src => ParseIsoDate(src.RateDate)))
-                .ForMember(dest => dest.ISO, opt => opt.MapFrom(src => new IsoCode { Code = src.ISO }));
+                .ForMember(dest => dest.ISO, opt => opt.MapFrom(src => src.ISO));
 
             CreateMap<ExchangeRate, ExchangeRateDto>()
                 .ForMember(dest => dest.RateDate, opt => opt.MapFrom(src => src.RateDate.ToString("yyyy-mm-dd")))
-                .ForMember(dest => dest.ISO, opt => opt.MapFrom(src => src.ISO.Code));
+                .ForMember(dest => dest.ISO, opt => opt.MapFrom(src => src.ISO));
 
         }
         private DateTime ParseIsoDate(string date)

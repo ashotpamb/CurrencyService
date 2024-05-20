@@ -4,11 +4,10 @@ using System.Text;
 using System.Xml.Serialization;
 using System.Xml;
 using ExchangeData.Services;
-using ExchangeDate.Domain;
+using Domain = ExchangeDate.Domain;
 using ExchangeData.Dtos;
-using System.Globalization;
-using System.Linq;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using ExchangeData.Entities;
+using System.Reflection.Metadata;
 
 namespace ExchangeData.Services
 {
@@ -25,58 +24,59 @@ namespace ExchangeData.Services
             _httpClient = new HttpClient();
             _acrchive = acrchive;
         }
-        public async Task<List<ExchangeRateDto>> PostAsync(string iso, string from, string to)
-        {
-            ArgumentNullException.ThrowIfNull(iso);
-
-            if (!DateTime.TryParse(from, out DateTime dateFrom) ||
-                !DateTime.TryParse(to,out DateTime dateTo))
+            public async Task<List<ExchangeRateDto>> PostAsync(string iso, string from, string to)
             {
-                throw new ArgumentException("Invalid date format. Please use 'yyyy-MM-dd'.");
+                ArgumentNullException.ThrowIfNull(iso);
+
+                if (!DateTime.TryParse(from, out DateTime dateFrom) ||
+                    !DateTime.TryParse(to,out DateTime dateTo))
+                {
+                    throw new ArgumentException("Invalid date format. Please use 'yyyy-MM-dd'.");
+                }
+
+                string isoDateFrom = dateFrom.ToString("s");
+                string isoDateTo = dateTo.ToString("s");
+
+                var requestEnvelope = ExchangeRatesByDate(iso, isoDateFrom, isoDateTo);
+                var content = new StringContent(requestEnvelope, Encoding.UTF8, "text/xml");
+                content.Headers.Add("SOAPAction", _ACTION + "ExchangeRatesByDateRangeByISO");
+
+                var response = await _httpClient.PostAsync(_URL, content);
+                response.EnsureSuccessStatusCode();
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                XmlDocument xmlDocument = new XmlDocument();
+                xmlDocument.LoadXml(responseContent);
+                XmlNode diffgramNode = xmlDocument.SelectSingleNode("//diffgr:diffgram/DocumentElement", GetNamespaceManager(xmlDocument));
+
+                if (diffgramNode is null) throw _= new Exception($"Data with ISO Code: {iso} not found");
+
+                //Add data to the archive asynchronously
+                _ = Task.Run(async () =>
+                {
+                    _ = await _acrchive.AddDataAsync(await content.ReadAsStringAsync(), responseContent);
+                });
+
+                XmlNodeList exchangeRatesNodes = diffgramNode.SelectNodes("ExchangeRatesByRange");
+                var ISO = new IsoCode() { Code = iso.ToUpper() };
+
+                List<ExchangeRateDto> exchangeRates = ProcessData(exchangeRatesNodes, ISO);
+
+                var allDatas = Enumerable.Range(0, (dateTo - dateFrom).Days + 1)
+                    .Select(offset => dateFrom.AddDays(offset))
+                    .ToList();
+
+                var missingData = GetMissingData(allDatas, exchangeRates, ISO);
+
+                return exchangeRates.Concat(missingData).OrderBy(e => e.RateDate).ToList();
             }
-
-            string isoDateFrom = dateFrom.ToString("s");
-            string isoDateTo = dateTo.ToString("s");
-
-            var requestEnvelope = ExchangeRatesByDate(iso, isoDateFrom, isoDateTo);
-            var content = new StringContent(requestEnvelope, Encoding.UTF8, "text/xml");
-            content.Headers.Add("SOAPAction", _ACTION + "ExchangeRatesByDateRangeByISO");
-
-            var response = await _httpClient.PostAsync(_URL, content);
-            response.EnsureSuccessStatusCode();
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.LoadXml(responseContent);
-            XmlNode diffgramNode = xmlDocument.SelectSingleNode("//diffgr:diffgram/DocumentElement", GetNamespaceManager(xmlDocument));
-
-            if (diffgramNode is null) throw _= new Exception($"Data with ISO Code: {iso} not found");
-
-            //Add data to the archive asynchronously
-            _ = Task.Run(async () =>
-            {
-                _ = await _acrchive.AddDataAsync(await content.ReadAsStringAsync(), responseContent);
-            });
-
-            XmlNodeList exchangeRatesNodes = diffgramNode.SelectNodes("ExchangeRatesByRange");
-
-            var allData = Enumerable.Range(0, (dateTo - dateFrom).Days + 1)
-             .Select(offset => dateFrom.AddDays(offset))
-             .ToList();
-
-            List<ExchangeRateDto> exchangeRates = ProcessData(exchangeRatesNodes);
-
-            var missingData = GetMissingData(allData, exchangeRates);
-
-            return exchangeRates.Concat(missingData).OrderBy(e => e.RateDate).ToList();
-        }
 
         /// <summary>
         /// Get missing data if client returned empty for some date
         /// </summary>
         /// <param name="exchangeRateDtos"></param>
         /// <returns>Returns Missing data parsed ExchangeRateDto to object</returns>
-        private List<ExchangeRateDto> GetMissingData(List<DateTime> dateTimes, List<ExchangeRateDto> exchangeRateDtos)
+        private List<ExchangeRateDto> GetMissingData(List<DateTime> dateTimes, List<ExchangeRateDto> exchangeRateDtos, IsoCode isoCode)
         {
             var soapData = exchangeRateDtos.Select(e => e.RateDate).ToHashSet();
             var dateTostring = dateTimes.Select(t => t.ToString("yyyy-MM-dd")).ToHashSet();
@@ -89,7 +89,7 @@ namespace ExchangeData.Services
             {
                 Rate = 0,
                 Amount = 0,
-                ISO = null,
+                ISO = isoCode,
                 Diff = 0,
                 RateDate = date,
             }).ToList();
@@ -97,19 +97,18 @@ namespace ExchangeData.Services
             return missingData;
         }
 
-        private List<ExchangeRateDto> ProcessData(XmlNodeList exchangeRatesNodes)
+        private List<ExchangeRateDto> ProcessData(XmlNodeList exchangeRatesNodes, IsoCode isoCode)
         {
             List<ExchangeRateDto> exchangeRates = new List<ExchangeRateDto>();
-
             foreach (XmlNode node in exchangeRatesNodes)
             {
-                var tempObj = DeserializeXml<ExchangeRate>(node.OuterXml);
+                var tempObj = DeserializeXml<Domain.ExchangeRate>(node.OuterXml);
 
                 ExchangeRateDto exchangeRateDto = new ExchangeRateDto
                 {
                     Rate = tempObj.Rate,
                     Amount = tempObj.Amount,
-                    ISO = tempObj.ISO,
+                    ISO = isoCode,
                     Diff = tempObj.Diff,
                     RateDate = tempObj.RateDate,
                     CBA_HasData = true,

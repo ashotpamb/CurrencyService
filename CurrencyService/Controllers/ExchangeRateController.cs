@@ -34,7 +34,7 @@ namespace CurrencyService.Controllers
             try
             {
                 var response = await _exchangeRateRepository.GetByRangeAsync(ISOCode, DateFrom, DateTo);
-                return Ok(response);
+                return Ok(response.Select(er => er.Serialize()).ToList());
 
             }
             catch (Exception ex) 

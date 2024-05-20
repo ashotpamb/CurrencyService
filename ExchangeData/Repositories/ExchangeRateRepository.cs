@@ -38,34 +38,9 @@ namespace ExchangeData.Repositories
         /// <returns> Return true if data has been added </returns>
         public async Task<bool> AddRangeAsync(List<ExchangeRate> currencies)
         {
-            ArgumentNullException.ThrowIfNull(currencies);
-            var distinctIsoCodes = currencies.Select(er => er.ISO.Code).Distinct().Where(code => code != null).ToList();
-            var isoCodeDictionary = new Dictionary<string, IsoCode>();
-
-            foreach (var isoCode in distinctIsoCodes)
+            if (currencies == null || !currencies.Any())
             {
-                var existingIsoCode = _context.IsoCodes.FirstOrDefault(ic => ic.Code == isoCode);
-                if (existingIsoCode == null)
-                {
-                    existingIsoCode = new IsoCode { Code = isoCode };
-                    _context.IsoCodes.Add(existingIsoCode);
-                    await _context.SaveChangesAsync();
-                }
-                isoCodeDictionary[isoCode] = existingIsoCode;
-            }
-
-            foreach (var currency in currencies)
-            {
-                if (currency.ISO != null && currency.ISO.Code != null && isoCodeDictionary.TryGetValue(currency.ISO.Code, out var isoCode))
-                {
-                    currency.ISO = isoCode;
-                    currency.CodeID = isoCode.Id;
-                }
-                else
-                {
-                    currency.ISO = null;
-                    currency.CodeID = null;
-                }
+                throw new ArgumentException("The currencies list cannot be null or empty.", nameof(currencies));
             }
             await _context.Rates.AddRangeAsync(currencies);
             await SaveChangesAsync();
@@ -83,7 +58,7 @@ namespace ExchangeData.Repositories
         /// <exception cref="ArgumentException">Thrown when the 'from' or 'to' date parameters are in an invalid format.</exception>
         /// <exception cref="ExchangeRateException">Thrown when an error occurs while fetching or processing exchange rate data.</exception>
 
-        public async Task<List<object>> GetByRangeAsync(string isoCode, string from, string to)
+        public async Task<List<ExchangeRateDto>> GetByRangeAsync(string isoCode, string from, string to)
         {
             string requestedCache = $"Requested_key_{isoCode}_{from}_{to}";
 
@@ -91,23 +66,21 @@ namespace ExchangeData.Repositories
             var cacheEntryOptions = new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(2));
 
-            ArgumentNullException.ThrowIfNull(isoCode);
-
-            if (!DateTime.TryParseExact(from, "yyyy-mm-dd", null, System.Globalization.DateTimeStyles.None, out DateTime dateFrom) ||
-                !DateTime.TryParseExact(to, "yyyy-mm-dd", null, System.Globalization.DateTimeStyles.None, out DateTime dateTo))
+            ArgumentException.ThrowIfNullOrEmpty(isoCode);
+            if (!DateTime.TryParse(from, out DateTime dateFrom) ||
+                !DateTime.TryParse(to, out DateTime dateTo))
             {
                 throw new ArgumentException("Invalid date format. Please use 'yyyy-MM-dd'.");
             }
-            await Console.Out.WriteLineAsync(requestedCache);
 
             if (_memoryCache.TryGetValue(requestedCache, out List<ExchangeRateDto> cachedData))
             {
-                return cachedData.Select(e => e.Serialize()).ToList();
+                return cachedData;
             }
 
             var existingRates = await _context.Rates
                 .Include(er => er.ISO)
-                .Where(er => er.ISO.Code == isoCode && (er.CodeID == null || (er.RateDate >= dateFrom && er.RateDate <= dateTo)))
+                .Where(er => er.ISO.Code == isoCode.ToLower() && er.RateDate >= dateFrom && er.RateDate <= dateTo)
                 .ToListAsync();
 
             if (!existingRates.Any())
@@ -121,7 +94,7 @@ namespace ExchangeData.Repositories
                 try
                 {
                     await AddRangeAsync(exchangeRates);
-                    return fetchedRates.Select(s => s.Serialize()).ToList();
+                    return fetchedRates;
 
                 }
                 catch (Exception ex) 
@@ -131,21 +104,38 @@ namespace ExchangeData.Repositories
                 }
 
             }
-            var check = CheckRange(existingRates, dateFrom, dateTo);
-            return default;
-    
+            if (CheckRange(dateFrom, dateTo) > existingRates.Count) 
+            {
+                var fetchedRates = await _client.PostAsync(isoCode, from, to);
 
+                _memoryCache.Set(requestedCache, fetchedRates, cacheEntryOptions);
+
+                List<ExchangeRate> newExchangeRates = MapCollection<ExchangeRate, ExchangeRateDto>(fetchedRates);
+
+                 newExchangeRates.RemoveAll(item => existingRates.Contains(item));
+
+                try
+                {
+                    await AddRangeAsync(newExchangeRates);
+                    return fetchedRates;
+
+                }
+                catch (Exception ex)
+                {
+                    throw new ExchangeRateException(ex.Message);
+
+                }
+            }
+            return MapCollection<ExchangeRateDto, ExchangeRate>(existingRates);
         }
 
-        private List<DateTime> CheckRange(List<ExchangeRate> exchangeRateDtos, DateTime dateFrom, DateTime dateTo)
+        private int CheckRange(DateTime dateFrom, DateTime dateTo)
         {
-            var maxDate = exchangeRateDtos.Max(e => e.RateDate);
-            var minDate = exchangeRateDtos.Min(e => e.RateDate);
-
             var allDates = Enumerable.Range(0, (dateTo - dateFrom).Days + 1)
                 .Select(offset => dateFrom.AddDays(offset))
                 .ToList();
-            return default;
+
+            return allDates.Count;
         }
 
         /// <summary>
