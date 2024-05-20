@@ -11,7 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExchangeData", "ExchangeDat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchiveCleanupService", "ArchiveCleanupService\ArchiveCleanupService.csproj", "{172AB2AB-5BAD-4CE8-B97C-EA282C8C4B86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CurrencyServiceTests", "CUrrencyServiceTests\CurrencyServiceTests.csproj", "{3FE7D331-E42D-49F5-877B-B222E8078D04}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CurrencyServiceTests", "CUrrencyServiceTests\CurrencyServiceTests.csproj", "{3FE7D331-E42D-49F5-877B-B222E8078D04}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F2CBD8B5-D192-4A21-BC7B-81020D1375BB}"
+	ProjectSection(SolutionItems) = preProject
+		README.txt = README.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
