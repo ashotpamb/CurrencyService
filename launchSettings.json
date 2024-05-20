@@ -4,7 +4,8 @@
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
       "serviceActions": {
-        "currencyservice": "StartDebugging"
+        "currency_service": "StartDebugging",
+        "currency_service_db": "StartWithoutDebugging"
       }
     }
   }

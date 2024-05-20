@@ -9,8 +9,8 @@ namespace ExchangeData.Repositories
 {
     public interface IExchangeRateRepository
     {
-        Task<ExchaneRates> AddAsync(ExchaneRates currency);
-        Task<ExchaneRates> GetAsync(long id);
-        Task<ExchaneRates> GetByRangeAsync(string isoCode, string dateFrom, string dateTo);
+        Task<bool> AddRangeAsync(List<ExchangeRate> currencies);
+        Task<List<object>> GetByRangeAsync(string isoCode, string dateFrom, string dateTo);
+        Task<bool> SaveChangesAsync();
     }
 }

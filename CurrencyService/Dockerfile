@@ -11,6 +11,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["../CurrencyService/CurrencyService.csproj", "CurrencyService/"]
 COPY ["../ExchangeDateData/ExchangeData.csproj", "ExchangeDateData/"]
+COPY ["../ArchiveCleanupService/ArchiveCleanupService.csproj", "ArchiveCleanupService/"]
 RUN dotnet restore "./CurrencyService/CurrencyService.csproj"
 COPY . .
 WORKDIR "/src/CurrencyService"

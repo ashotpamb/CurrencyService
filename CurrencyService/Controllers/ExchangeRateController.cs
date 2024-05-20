@@ -33,7 +33,7 @@ namespace CurrencyService.Controllers
         {
             try
             {
-                var response = await _exchangeRateRepository.GetAsync(5);
+                var response = await _exchangeRateRepository.GetByRangeAsync(ISOCode, DateFrom, DateTo);
                 return Ok(response);
 
             }
