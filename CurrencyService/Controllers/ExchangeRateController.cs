@@ -29,8 +29,9 @@ namespace CurrencyService.Controllers
         public async Task<ActionResult> ExchangeRatesByDate(
             [FromQuery(Name = "DateFrom")] string DateFrom,
             [FromQuery(Name = "DateTo")] string DateTo,
-            [FromQuery] string ISOCode)
-        {
+            [FromQuery] string ISOCode
+            )
+        { 
             try
             {
                 var response = await _exchangeRateRepository.GetByRangeAsync(ISOCode, DateFrom, DateTo);

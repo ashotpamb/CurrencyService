@@ -26,7 +26,6 @@ namespace CurrencyServiceTests
         [TestInitialize]
         public void Setup()
         {
-            Console.WriteLine("Test Stated");
             var services = new ServiceCollection();
             services.AddDbContext<DataContext>(options =>
             {
@@ -75,7 +74,7 @@ namespace CurrencyServiceTests
         }
 
         [TestMethod]
-        public async Task AddRangeAsync_ThrowArgumentExceptionIfDataIsNull()
+        public async Task AddRangeAsync_ThrowArgumentExceptionIfDataIsEmpty()
         {
             //Arrange
             var currencies = new List<ExchangeRate>();

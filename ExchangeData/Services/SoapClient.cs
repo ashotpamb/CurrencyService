@@ -24,52 +24,52 @@ namespace ExchangeData.Services
             _httpClient = new HttpClient();
             _acrchive = acrchive;
         }
-            public async Task<List<ExchangeRateDto>> PostAsync(string iso, string from, string to)
+        public async Task<List<ExchangeRateDto>> PostAsync(string iso, string from, string to)
+        {
+            ArgumentNullException.ThrowIfNull(iso);
+
+            if (!DateTime.TryParse(from, out DateTime dateFrom) ||
+                !DateTime.TryParse(to, out DateTime dateTo))
             {
-                ArgumentNullException.ThrowIfNull(iso);
-
-                if (!DateTime.TryParse(from, out DateTime dateFrom) ||
-                    !DateTime.TryParse(to,out DateTime dateTo))
-                {
-                    throw new ArgumentException("Invalid date format. Please use 'yyyy-MM-dd'.");
-                }
-
-                string isoDateFrom = dateFrom.ToString("s");
-                string isoDateTo = dateTo.ToString("s");
-
-                var requestEnvelope = ExchangeRatesByDate(iso, isoDateFrom, isoDateTo);
-                var content = new StringContent(requestEnvelope, Encoding.UTF8, "text/xml");
-                content.Headers.Add("SOAPAction", _ACTION + "ExchangeRatesByDateRangeByISO");
-
-                var response = await _httpClient.PostAsync(_URL, content);
-                response.EnsureSuccessStatusCode();
-                var responseContent = await response.Content.ReadAsStringAsync();
-
-                XmlDocument xmlDocument = new XmlDocument();
-                xmlDocument.LoadXml(responseContent);
-                XmlNode diffgramNode = xmlDocument.SelectSingleNode("//diffgr:diffgram/DocumentElement", GetNamespaceManager(xmlDocument));
-
-                if (diffgramNode is null) throw _= new Exception($"Data with ISO Code: {iso} not found");
-
-                //Add data to the archive asynchronously
-                _ = Task.Run(async () =>
-                {
-                    _ = await _acrchive.AddDataAsync(await content.ReadAsStringAsync(), responseContent);
-                });
-
-                XmlNodeList exchangeRatesNodes = diffgramNode.SelectNodes("ExchangeRatesByRange");
-                var ISO = new IsoCode() { Code = iso.ToUpper() };
-
-                List<ExchangeRateDto> exchangeRates = ProcessData(exchangeRatesNodes, ISO);
-
-                var allDatas = Enumerable.Range(0, (dateTo - dateFrom).Days + 1)
-                    .Select(offset => dateFrom.AddDays(offset))
-                    .ToList();
-
-                var missingData = GetMissingData(allDatas, exchangeRates, ISO);
-
-                return exchangeRates.Concat(missingData).OrderBy(e => e.RateDate).ToList();
+                throw new ArgumentException("Invalid date format. Please use 'yyyy-MM-dd'.");
             }
+
+            string isoDateFrom = dateFrom.ToString("s");
+            string isoDateTo = dateTo.ToString("s");
+
+            var requestEnvelope = ExchangeRatesByDate(iso, isoDateFrom, isoDateTo);
+            var content = new StringContent(requestEnvelope, Encoding.UTF8, "text/xml");
+            content.Headers.Add("SOAPAction", _ACTION + "ExchangeRatesByDateRangeByISO");
+
+            var response = await _httpClient.PostAsync(_URL, content);
+            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            XmlDocument xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(responseContent);
+            XmlNode diffgramNode = xmlDocument.SelectSingleNode("//diffgr:diffgram/DocumentElement", GetNamespaceManager(xmlDocument));
+
+            if (diffgramNode is null) throw _ = new Exception($"Data with ISO Code: {iso} not found");
+
+            //Add data to the archive asynchronously
+            _ = Task.Run(async () =>
+            {
+                _ = await _acrchive.AddDataAsync(await content.ReadAsStringAsync(), responseContent);
+            });
+
+            XmlNodeList exchangeRatesNodes = diffgramNode.SelectNodes("ExchangeRatesByRange");
+            var ISO = new IsoCode() { Code = iso.ToUpper() };
+
+            List<ExchangeRateDto> exchangeRates = ProcessData(exchangeRatesNodes, ISO);
+
+            var allDatas = Enumerable.Range(0, (dateTo - dateFrom).Days + 1)
+                .Select(offset => dateFrom.AddDays(offset))
+                .ToList();
+
+            var missingData = GetMissingData(allDatas, exchangeRates, ISO);
+
+            return exchangeRates.Concat(missingData).OrderBy(e => e.RateDate).ToList();
+        }
 
         /// <summary>
         /// Get missing data if client returned empty for some date
