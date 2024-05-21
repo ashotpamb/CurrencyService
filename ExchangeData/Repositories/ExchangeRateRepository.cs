@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace ExchangeData.Repositories
@@ -60,13 +61,18 @@ namespace ExchangeData.Repositories
 
         public async Task<List<ExchangeRateDto>> GetByRangeAsync(string isoCode, string from, string to)
         {
+
+
+      
+            ArgumentException.ThrowIfNullOrEmpty(isoCode);
+
+            if (!ValidateIsoCodes(isoCode)) throw new ArgumentException($"Invalid ISO Code {isoCode}");
             string requestedCache = $"Requested_key_{isoCode}_{from}_{to}";
 
             //Delete cache if there is no request for more than 2 minute
             var cacheEntryOptions = new MemoryCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(2));
 
-            ArgumentException.ThrowIfNullOrEmpty(isoCode);
             if (!DateTime.TryParse(from, out DateTime dateFrom) ||
                 !DateTime.TryParse(to, out DateTime dateTo))
             {
@@ -138,6 +144,25 @@ namespace ExchangeData.Repositories
             return allDates.Count;
         }
 
+        /// <summary>
+        /// Validate iso codes 
+        /// All iso codes from CBA
+        /// </summary>
+        /// <param name="isoCode"></param>
+        /// <returns> Return true if parameter iso code contain valid iso code </returns>
+
+        private bool ValidateIsoCodes(string isoCode)
+        {
+            List<string> ValidIsoCodes = new()
+            {
+                "AED", "ARS", "AUD", "BGN", "BRL", "BYN", "CAD", "CHF", "CNY", "CZK",
+                "DKK", "EGP", "EUR", "GBP", "GEL", "HKD", "HUF", "ILS", "INR", "IRR",
+                "ISK", "JPY", "KGS", "KRW", "KWD", "KZT", "LBP", "LTL", "LVL", "MDL",
+                "MXN", "NOK", "NZD", "PLN", "RON", "RUB", "SAR", "SEK", "SGD", "SKK",
+                "SYP", "TJS", "TMT", "TRY", "UAH", "USD", "UZS", "XAG", "XAU", "XDR"
+            };
+            return ValidIsoCodes.Contains(isoCode.ToUpper());
+        }
         /// <summary>
         /// Map collections (Left source TSource) (rigth destination TDestination)
         /// </summary>
